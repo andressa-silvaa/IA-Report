@@ -1,16 +1,19 @@
-from newsCollection import NewsCollection
 import pandas as pd
 import re
 from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
 from nltk.stem import PorterStemmer
 from datetime import datetime, timedelta
+import spacy
+from newsCollection import NewsCollection
 
-class NewsRepository:
+
+class PreProcessing:
     def __init__(self, news_collection):
         self.news_collection = news_collection
         self.stop_words = set(stopwords.words('portuguese'))
         self.stemmer = PorterStemmer()
+        self.nlp = spacy.load('pt_core_news_sm')
 
     def process_data(self):
         content = self.news_collection.load_page()
@@ -27,6 +30,10 @@ class NewsRepository:
 
         # Converter a lista de notícias filtrada em um DataFrame
         df = pd.DataFrame(filtered_news)
+
+        # Adicionar a coluna de localidade
+        df['locality'] = df['content'].apply(self.extract_location)
+
         df.to_excel('news_data.xlsx', index=False)
 
         # Retornar o DataFrame
@@ -68,17 +75,15 @@ class NewsRepository:
         content = news['content']
         return 'desmatamento' in title or 'desmatamento' in content
 
-    def save_to_database(self, processed_data):
-        # Método para salvar os dados processados no banco de dados
-        pass
-
-    # Outros métodos necessários podem ser adicionados aqui
-
+    def extract_location(self, text):
+        doc = self.nlp(text)
+        locations = [ent.text for ent in doc.ents if ent.label_ == 'LOC']
+        return ', '.join(locations) if locations else None
 
 if __name__ == "__main__":
     url = 'https://g1.globo.com/busca/?q=desmatamento&ps=on&order=recent&from=now-1M'
     news_collection = NewsCollection(url)
 
-    news_repository = NewsRepository(news_collection)
+    news_repository = PreProcessing(news_collection)
     news_list = news_repository.process_data()
     print(news_list)
