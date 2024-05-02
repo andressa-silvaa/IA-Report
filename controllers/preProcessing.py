@@ -5,7 +5,7 @@ from nltk.corpus import stopwords
 from nltk.stem import PorterStemmer
 from datetime import datetime, timedelta
 import spacy
-from newsCollection import NewsCollection
+from controllers.newsCollection import NewsCollection
 
 
 class PreProcessing:
@@ -31,7 +31,6 @@ class PreProcessing:
         # Converter a lista de notícias filtrada em um DataFrame
         df = pd.DataFrame(filtered_news)
 
-        # Adicionar a coluna de localidade
         df['locality'] = df['content'].apply(self.extract_location)
 
         df.to_excel('news_data.xlsx', index=False)
