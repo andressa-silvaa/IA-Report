@@ -20,10 +20,14 @@ class NewsDataBase:
 
     def insert_news(self, news_list):
         cursor = self.conn.cursor()
-        for news in news_list:
-            cursor.execute('''INSERT INTO news (title, content, age, link, media_img, media_video, locality)
-                              VALUES (%s, %s, %s, %s, %s, %s, %s)''',
-                           (news['title'], news['content'], news['age'], news['link'], news['media_img'], news['media_video'], news['locality']))
+        for index, news in enumerate(news_list):
+            try:
+                cursor.execute('''INSERT INTO news (title, content, age, link, media_img, media_video, locality)
+                                  VALUES (%s, %s, %s, %s, %s, %s, %s)''',
+                               (news['title'], news['content'], news['age'], news['link'], news['media_img'],
+                                news['media_video'], news['locality']))
+            except Exception as e:
+                print(f"Error processing news at index {index}: {e}")
         self.conn.commit()
 
     def get_all_news(self):
