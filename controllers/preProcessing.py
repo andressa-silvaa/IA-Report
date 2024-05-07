@@ -7,13 +7,19 @@ from datetime import datetime, timedelta
 import spacy
 from controllers.newsCollection import NewsCollection
 
-
 class PreProcessing:
     def __init__(self, news_collection):
         self.news_collection = news_collection
         self.stop_words = set(stopwords.words('portuguese'))
         self.stemmer = PorterStemmer()
         self.nlp = spacy.load('pt_core_news_sm')
+        self.categories = {
+            'agricultura': ['agricultura', 'agricultor', 'plantio', 'lavoura', 'agroindústria', 'agronegócio'],
+            'agropecuária': ['agropecuária', 'pecuária', 'fazenda', 'gado', 'criação', 'pecuarista'],
+            'garimpo': ['garimpo', 'mineradora', 'mineração', 'extração', 'exploração', 'lavra'],
+            'atividades ilegais': ['ilegal', 'crime', 'contrabando', 'tráfico', 'ilegalidade', 'ilegalmente'],
+            'outro': []
+        }
 
     def process_data(self):
         content = self.news_collection.load_page()
@@ -28,8 +34,11 @@ class PreProcessing:
         # Filtrar as notícias relacionadas ao desmatamento
         filtered_news = [news for news in processed_news_list if self.is_deforestation(news)]
 
+        # Adicionar categorias com base em critérios
+        categorized_news = self.add_categories(filtered_news)
+
         # Converter a lista de notícias filtrada em um DataFrame
-        df = pd.DataFrame(filtered_news)
+        df = pd.DataFrame(categorized_news)
 
         df['locality'] = df['content'].apply(self.extract_location)
 
@@ -74,13 +83,41 @@ class PreProcessing:
         content = news['content']
         return 'desmatamento' in title or 'desmatamento' in content
 
+    def add_categories(self, news_list):
+        categorized_news = []
+        category_counter = 0
+        for news in news_list:
+            if category_counter < 3:
+                category = self.classify_category(news['title'], news['content'])
+                news['category'] = category
+                category_counter += 1
+            else:
+                news['category'] = ''
+                category_counter = 0
+            categorized_news.append(news)
+        return categorized_news
+
+    def classify_category(self, title, content):
+        # Convertendo o título e o conteúdo para minúsculas para tornar a comparação insensível a maiúsculas e minúsculas
+        text = f"{title.lower()} {content.lower()}"
+        for category, keywords in self.categories.items():
+            # Aplicando stemming nas palavras-chave de cada categoria
+            stemmed_keywords = [self.stemmer.stem(word) for word in keywords]
+            # Verifica se alguma palavra-chave ou sinônimo está presente no texto da notícia
+            for keyword in stemmed_keywords:
+                # Usando expressões regulares para encontrar correspondências de palavras inteiras
+                if re.search(rf"\b{keyword}\b", text):
+                    return category
+        # Se nenhum padrão corresponder, atribui a categoria 'outro'
+        return 'outro'
+
     def extract_location(self, text):
         doc = self.nlp(text)
         locations = [ent.text for ent in doc.ents if ent.label_ == 'LOC']
         return ', '.join(locations) if locations else None
 
 if __name__ == "__main__":
-    url = 'https://g1.globo.com/busca/?q=desmatamento&ps=on&order=recent&from=now-1M'
+    url = 'https://g1.globo.com/busca/?q=desmatamento&ps=on&order=recent&from=now-1y'
     news_collection = NewsCollection(url)
 
     news_repository = PreProcessing(news_collection)

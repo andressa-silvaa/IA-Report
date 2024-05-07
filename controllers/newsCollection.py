@@ -50,7 +50,7 @@ class NewsCollection:
         return news_list
 
 if __name__ == "__main__":
-    url = 'https://g1.globo.com/busca/?q=desmatamento&ps=on&order=recent&from=now-1M'
+    url = 'https://g1.globo.com/busca/?q=desmatamento&ps=on&order=recent&from=now-1y'
     repository = NewsCollection(url)
     content = repository.load_page()
     news_list = repository.extract_info(content)

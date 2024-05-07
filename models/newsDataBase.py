@@ -14,7 +14,8 @@ class NewsDataBase:
                             link TEXT,
                             media_img TEXT,
                             media_video TEXT,
-                            locality TEXT
+                            locality TEXT,
+                            category TEXT
                         )''')
         self.conn.commit()
 
@@ -22,10 +23,10 @@ class NewsDataBase:
         cursor = self.conn.cursor()
         for index, news in enumerate(news_list):
             try:
-                cursor.execute('''INSERT INTO news (title, content, age, link, media_img, media_video, locality)
-                                  VALUES (%s, %s, %s, %s, %s, %s, %s)''',
+                cursor.execute('''INSERT INTO news (title, content, age, link, media_img, media_video, locality, category)
+                                  VALUES (%s, %s, %s, %s, %s, %s, %s, %s)''',
                                (news['title'], news['content'], news['age'], news['link'], news['media_img'],
-                                news['media_video'], news['locality']))
+                                news['media_video'], news['locality'], news.get('category', None)))
             except Exception as e:
                 print(f"Error processing news at index {index}: {e}")
         self.conn.commit()
