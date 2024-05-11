@@ -19,7 +19,7 @@ class SentimentAnalysis:
         # Loop sobre todas as notícias e conte os sentimentos
         for news in all_news:
             # Obtenha o texto da notícia
-            text = news.content
+            text = news[2]
 
             # Realize a análise de sentimento
             sentiment_score = self.sid.polarity_scores(text)

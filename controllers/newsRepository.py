@@ -21,7 +21,8 @@ class NewsRepository:
         news_database = NewsDataBase(self.dbname, self.user, self.password, self.host, self.port)
         try:
             rows = news_database.get_all_news()
-            return [self._row_to_news(row) for row in rows]
+            return(rows)
+            #return [self._row_to_news(row) for row in rows]
         except Exception as e:
             print(f"Error retrieving all news: {e}")
             return []

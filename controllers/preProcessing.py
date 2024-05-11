@@ -14,12 +14,32 @@ class PreProcessing:
         self.stemmer = PorterStemmer()
         self.nlp = spacy.load('pt_core_news_sm')
         self.categories = {
+            'multas': ['multas', 'autuações', 'penalidades', 'sanções', 'infrações', 'coimas'],
+            'alertas': ['alertas', 'avisos', 'notificações', 'alarmes', 'advertências', 'sinalizações'],
             'agricultura': ['agricultura', 'agricultor', 'plantio', 'lavoura', 'agroindústria', 'agronegócio'],
             'agropecuária': ['agropecuária', 'pecuária', 'fazenda', 'gado', 'criação', 'pecuarista'],
             'garimpo': ['garimpo', 'mineradora', 'mineração', 'extração', 'exploração', 'lavra'],
             'atividades ilegais': ['ilegal', 'crime', 'contrabando', 'tráfico', 'ilegalidade', 'ilegalmente'],
-            'outro': []
+            'ação governamental': ['governo', 'governamental', 'política pública', 'medidas governamentais',
+                                   'gestão pública','programa'],
+            'estatísticas': ['estatísticas', 'dados', 'indicadores', 'análise estatística', 'pesquisas','rank','%'],
+            'fiscalização': ['fiscalização', 'fiscalizar', 'inspeção', 'controle', 'auditoria', 'regulação'],
+            'impactos ambientais': ['impactos ambientais', 'impacto ecológico', 'danos ambientais',
+                                    'degradação ambiental', 'poluição', 'contaminação'],
+            'conscientização pública': ['conscientização', 'educação ambiental', 'mobilização social',
+                                        'campanhas educativas', 'sensibilização', 'consciência ambiental']
         }
+
+        self.forbidden_locations = ['crime ambient','polícia feder combat, airão interior amazona divulgaçãopf','registr',
+                                    'oest, instituto nacion','maracanã','sobrevoo região','urbana rurai edificaçõ nova','polícia','combat','estado','secretaria estado meio ambient registr','confira','g1',
+                                    'cerrado','projeto','reunião batalhão ambient brigada militar','barreira combat','feder, airão interior amazona divulgação','ambient indenfic 7500',
+                                    'proprietário','polícia ambient indenfic 7500','polícia ambient', 'mp','proprietário licença ambient','união',', brasil, guarda','oest, instituto nacion',
+                                    'fundação so mata atlântica','conceição mato, ond','terçafeira','polícia feder prend suspeito','ilha banan','engenheiro ambient',
+                                    'semana','sc','polícia militar ambient idenfitif','militar ambient, barro branco joão paraíso','polícia militar localiz atravé',
+                                    'cidad','polícia feder','informaçõ','polícia militar ambient identific irregularidad','glasgow, brasil','informaçõ','informaçõ, instituto nacion pesquisa',
+                                    'vale jequitinhonha balanço','instituto nacion pesquisa','pf','piauí, instituto nacion pesquisa','viraliz banquet ave','sei pessoa','comentarista andré trigueiro analisa',
+                                    'abordagem ibama','milhõ durant operaçõ gerência','levantamento','polícia feder acr','grand proporçõ','mapbioma',
+                                    'via portavoz','militar ambient, barro branco joão paraíso','conceição mato, ond']
 
     def process_data(self):
         content = self.news_collection.load_page()
@@ -114,7 +134,39 @@ class PreProcessing:
     def extract_location(self, text):
         doc = self.nlp(text)
         locations = [ent.text for ent in doc.ents if ent.label_ == 'LOC']
-        return ', '.join(locations) if locations else None
+        if locations:
+            filtered_locations = []
+            for location in locations:
+                if any(forbidden in location.lower() for forbidden in self.forbidden_locations):
+                    for forbidden in self.forbidden_locations:
+                        if forbidden in location.lower():
+                            location = location.replace(forbidden, "")
+                    filtered_locations.append(location.strip())
+                else:
+                    filtered_locations.append(location)
+
+            # Substituir localizações específicas
+            replacements = {
+                'ministério meio ambient, amazônia': 'amazônia',
+                'confira destaqu g1, rondônia': 'rondônia',
+                'estado rondônia amazona ruan gabriel rede amazônica': 'rondônia',
+                'combat, amazônia, rondônia': 'rondônia',
+                'rondônia amazona ruan gabriel rede amazônica':'rondônia',
+                'imazon': 'amazônia',
+                'amazônia, instituto nacion pesquisa espaciai, amazônia': 'amazônia',
+                'amazônia menor': 'amazônia',
+                'mata atlântica, paraná, mata atlântica, mata atlântica': 'paraná',
+                'pantan so pantan, mato grosso sul': 'mato grosso do sul'
+            }
+
+            for i, location in enumerate(filtered_locations):
+                if location in replacements:
+                    filtered_locations[i] = replacements[location]
+
+            return ', '.join(filtered_locations) if filtered_locations else None
+        else:
+            return None
+
 
 if __name__ == "__main__":
     url = 'https://g1.globo.com/busca/?q=desmatamento&ps=on&order=recent&from=now-1y'

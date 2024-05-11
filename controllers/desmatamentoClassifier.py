@@ -12,26 +12,37 @@ class DesmatamentoClassifier:
     def train_model(self):
         # Obter os dados do banco de dados
         news_data = self.news_repository.get_all_news()
-        X = []
-        y = []
-        for news in news_data:
-            print(news.category)
+
+        #print(news_data)
+        #X = []
+        #y = []
+
+
+        for a in news_data:
+            print(f"Titulo: {a[1]}\nConteudo: {a[2]}\nIdade: {a[3]}\nLink: {a[4]}\nMidia de Imagem: {a[5]}\nMidia de video: {a[6]}\nCategoria: {a[7]}\n")
+
+
+        #print(news_data)
+        #for news in news_data:
+          # print(news)
+            #print(news.category)
+            #print(news.locality)
 
         # Filtrar os documentos não vazios com categoria
-        for news in news_data:
-            if news.content and news.category:
-                X.append(news.content)
-                y.append(news.category)
+        #for news in news_data:
+            #if news.content and news.category:
+            # X.append(news.content)
+        # y.append(news.category)
 
         # Verifica se há documentos não vazios com categoria
-        if X:
+            # if X:
             # Vetorização dos dados de texto
-            X = self.vectorizer.fit_transform(X)
+            #  X = self.vectorizer.fit_transform(X)
 
             # Treinamento do modelo Naive Bayes
-            self.model.fit(X, y)
-        else:
-            print("Nenhum documento não vazio com categoria encontrado para treinar o modelo.")
+        # self.model.fit(X, y)
+            #  else:
+        # print("Nenhum documento não vazio com categoria encontrado para treinar o modelo.")
 
     def predict_category(self, news_content):
         # Verifica se o conteúdo da notícia não está vazio

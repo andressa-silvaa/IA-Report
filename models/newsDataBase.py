@@ -33,7 +33,7 @@ class NewsDataBase:
 
     def get_all_news(self):
         cursor = self.conn.cursor()
-        cursor.execute('''SELECT * FROM news''')
+        cursor.execute('''SELECT n.title,n.content,n.category FROM news n''')
         rows = cursor.fetchall()
         return rows
 

@@ -13,14 +13,23 @@ class NewsCollection:
         options.add_argument('--headless')
         driver = webdriver.Chrome(options=options)
         driver.get(self.url)
+
         while True:
             try:
                 ver_mais_button = WebDriverWait(driver, 10).until(
                     EC.visibility_of_element_located((By.CLASS_NAME, 'pagination__load-more'))
                 )
+                old_news_count = len(driver.find_elements(By.CLASS_NAME, 'widget--card'))
                 driver.execute_script("arguments[0].click();", ver_mais_button)
+                WebDriverWait(driver, 10).until(
+                    EC.staleness_of(ver_mais_button)
+                )
+                new_news_count = len(driver.find_elements(By.CLASS_NAME, 'widget--card'))
+                if new_news_count == old_news_count:
+                    break
             except:
                 break
+
         content = driver.page_source
         driver.quit()
         return content
