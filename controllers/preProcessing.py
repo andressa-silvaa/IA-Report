@@ -16,18 +16,18 @@ class PreProcessing:
         self.categories = {
             'multas': ['multas', 'autuações', 'penalidades', 'sanções', 'infrações', 'coimas'],
             'alertas': ['alertas', 'avisos', 'notificações', 'alarmes', 'advertências', 'sinalizações'],
-            'agricultura': ['agricultura', 'agricultor', 'plantio', 'lavoura', 'agroindústria', 'agronegócio'],
+            'agricultura': ['agricultura', 'agricultor', 'plantio', 'lavoura', 'agroindústria', 'agronegócio','agrícola'],
             'agropecuária': ['agropecuária', 'pecuária', 'fazenda', 'gado', 'criação', 'pecuarista'],
             'garimpo': ['garimpo', 'mineradora', 'mineração', 'extração', 'exploração', 'lavra'],
-            'atividades ilegais': ['ilegal', 'crime', 'contrabando', 'tráfico', 'ilegalidade', 'ilegalmente'],
+            'fiscalização': ['fiscalização', 'fiscalizar', 'inspeção', 'auditoria', 'regulação', 'polícia',
+                             'fiscalizam', 'prende', 'acusado', 'operação', 'coordenadoria', 'flagram', 'flagrou',
+                             'polícia', 'flagra','flagrado','preso'],
             'ação governamental': ['governo', 'governamental', 'política pública', 'medidas governamentais',
-                                   'gestão pública','programa'],
-            'estatísticas': ['estatísticas', 'dados', 'indicadores', 'análise estatística', 'pesquisas','rank','%'],
-            'fiscalização': ['fiscalização', 'fiscalizar', 'inspeção', 'controle', 'auditoria', 'regulação'],
-            'impactos ambientais': ['impactos ambientais', 'impacto ecológico', 'danos ambientais',
-                                    'degradação ambiental', 'poluição', 'contaminação'],
+                                   'gestão pública','programa','combate'],
+            'atividades ilegais': ['ilegal', 'contrabando', 'tráfico', 'ilegalidade', 'ilegalmente'],
+            'estatísticas': ['estatísticas', 'dados', 'indicadores', 'análise estatística', 'pesquisas','rank','%','área','estudo','tendência','redução','queda','cai','taxa','aponta','levantamento','cresce','caiu'],
             'conscientização pública': ['conscientização', 'educação ambiental', 'mobilização social',
-                                        'campanhas educativas', 'sensibilização', 'consciência ambiental']
+                                        'campanhas educativas', 'sensibilização', 'consciência ambiental','ambientalista','protestam','dúvida','promotor']
         }
 
         self.forbidden_locations = ['crime ambient','polícia feder combat, airão interior amazona divulgaçãopf','registr',
