@@ -6,7 +6,7 @@ from sklearn.preprocessing import LabelEncoder
 from tensorflow.keras.preprocessing.text import Tokenizer
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 from tensorflow.keras.models import Model
-from tensorflow.keras.layers import Input, Embedding, LSTM, Dense, Concatenate
+from tensorflow.keras.layers import Input, Embedding, LSTM, Dense, Concatenate, Dropout
 
 # Conectar ao banco de dados e recuperar os dados
 db_name = 'usjlmkja'
@@ -21,6 +21,7 @@ news_data = news_repo.get_all_news()
 # Criar DataFrame diretamente dos dados com os nomes das colunas especificados
 df = pd.DataFrame(news_data, columns=['title', 'content', 'category'])
 df.to_excel('original.xlsx', index=False)
+
 # Pré-processamento dos dados
 df['content'] = df['content'].apply(lambda x: str(x).lower())  # Converte para minúsculas
 df['title'] = df['title'].apply(lambda x: str(x).lower())      # Converte para minúsculas
@@ -72,14 +73,16 @@ embedding_title = Embedding(vocab_size, embedding_dim)(input_title)
 embedding_content = Embedding(vocab_size, embedding_dim)(input_content)
 
 # Camadas LSTM separadas para título e conteúdo
-lstm_title = LSTM(128)(embedding_title)
-lstm_content = LSTM(128)(embedding_content)
+lstm_title = LSTM(128, dropout=0.2, recurrent_dropout=0.2)(embedding_title)
+lstm_content = LSTM(128, dropout=0.2, recurrent_dropout=0.2)(embedding_content)
 
 # Concatenando as saídas das camadas LSTM
 concatenated = Concatenate()([lstm_title, lstm_content])
 
-# Camada densa para previsão da categoria
-output = Dense(len(label_encoder.classes_), activation='softmax')(concatenated)
+# Camada densa com dropout para previsão da categoria
+dense_layer = Dense(128, activation='relu')(concatenated)
+dropout_layer = Dropout(0.5)(dense_layer)
+output = Dense(len(label_encoder.classes_), activation='softmax')(dropout_layer)
 
 # Definindo o modelo
 model = Model(inputs=[input_title, input_content], outputs=output)

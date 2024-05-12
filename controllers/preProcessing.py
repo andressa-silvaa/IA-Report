@@ -25,7 +25,7 @@ class PreProcessing:
             'ação governamental': ['governo', 'governamental', 'política pública', 'medidas governamentais',
                                    'gestão pública','programa','combate'],
             'atividades ilegais': ['ilegal', 'contrabando', 'tráfico', 'ilegalidade', 'ilegalmente'],
-            'estatísticas': ['estatísticas', 'dados', 'indicadores', 'análise estatística', 'pesquisas','rank','%','área','estudo','tendência','redução','queda','cai','taxa','aponta','levantamento','cresce','caiu'],
+            'estatísticas': ['estatísticas', 'dados', 'indicadores', 'análise estatística', 'pesquisas','índice','rank','%','área','estudo','tendência','redução','queda','cai','taxa','aponta','levantamento','cresce','caiu'],
             'conscientização pública': ['conscientização', 'educação ambiental', 'mobilização social',
                                         'campanhas educativas', 'sensibilização', 'consciência ambiental','ambientalista','protestam','dúvida','promotor']
         }
