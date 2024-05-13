@@ -17,6 +17,14 @@ class NewsRepository:
         except Exception as e:
             print(f"Error processing and saving news: {e}")
 
+    def process_and_save_news_category(self, df):
+        news_database = NewsDataBase(self.dbname, self.user, self.password, self.host, self.port)
+        news_list = df.to_dict('records')
+        try:
+            news_database.insert_news_category(news_list)
+        except Exception as e:
+            print(f"Error processing and saving news category: {e}")
+
     def get_all_news(self):
         news_database = NewsDataBase(self.dbname, self.user, self.password, self.host, self.port)
         try:
@@ -26,7 +34,14 @@ class NewsRepository:
         except Exception as e:
             print(f"Error retrieving all news: {e}")
             return []
-
+    def get_title_content_category(self):
+        news_database = NewsDataBase(self.dbname, self.user, self.password, self.host, self.port)
+        try:
+            rows = news_database.get_title_content_category()
+            return(rows)
+        except Exception as e:
+            print(f"Error retrieving all news: {e}")
+            return []
     def get_news_by_title(self, title):
         news_database = NewsDataBase(self.dbname, self.user, self.password, self.host, self.port)
         try:

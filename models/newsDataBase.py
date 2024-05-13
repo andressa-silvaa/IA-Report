@@ -31,7 +31,21 @@ class NewsDataBase:
                 print(f"Error processing news at index {index}: {e}")
         self.conn.commit()
 
+    def insert_news_category(self, news_list):
+        cursor = self.conn.cursor()
+        for index, news in enumerate(news_list):
+            try:
+                cursor.execute('''UPDATE news SET category = %s WHERE title = %s''',
+                               (news.get('category', None), news['title']))
+            except Exception as e:
+                print(f"Error processing news at index {index}: {e}")
+        self.conn.commit()
     def get_all_news(self):
+        cursor = self.conn.cursor()
+        cursor.execute('''SELECT n.title,n.content,n.age,n.link,n.media_img,n.media_video,n.locality,n.category FROM news n''')
+        rows = cursor.fetchall()
+        return rows
+    def get_title_content_category(self):
         cursor = self.conn.cursor()
         cursor.execute('''SELECT n.title,n.content,n.category FROM news n''')
         rows = cursor.fetchall()
