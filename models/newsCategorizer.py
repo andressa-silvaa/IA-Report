@@ -1,77 +1,108 @@
 import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
-import tkinter as tk
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
+import numpy as np
+import random
+import tensorflow as tf
+from controllers.newsRepository import NewsRepository
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder
+from tensorflow.keras.preprocessing.text import Tokenizer
+from tensorflow.keras.preprocessing.sequence import pad_sequences
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Embedding, Conv1D, GlobalMaxPooling1D, Dense, Dropout
 
-# Supondo que a classe NewsRepository já esteja definida e importada corretamente
-news_repo = NewsRepository('usjlmkja', 'usjlmkja', 'QKJgujyxlBSINpQBd8Gc3-rsc8S0_fiT', 'isabelle.db.elephantsql.com', '5432')
+class NewsCategorizer:
+    def __init__(self, db_name, db_user, db_password, db_host, db_port):
+        np.random.seed(42)
+        tf.random.set_seed(42)
+        random.seed(42)
 
-# Recuperar os dados do banco de dados
-news_data = news_repo.get_all_news()
+        self.news_repo = NewsRepository(db_name, db_user, db_password, db_host, db_port)
+        self.df = None
+        self.tokenizer = Tokenizer()
+        self.label_encoder = LabelEncoder()
 
-# Criar um DataFrame com os dados
-df_dados = pd.DataFrame(news_data, columns=['title', 'content', 'age', 'link', 'media_img', 'media_video', 'locality', 'category', 'classification'])
+    def fetch_data(self):
+        news_data = self.news_repo.get_title_content_category()
+        self.df = pd.DataFrame(news_data, columns=['title', 'content', 'category'])
+        self.df.to_excel('original.xlsx', index=False)
 
-# Criar uma janela do Tkinter
-root = tk.Tk()
-root.title("Dashboard")
+    def preprocess_data(self):
+        self.df['content'] = self.df['content'].str.lower()
+        self.df['title'] = self.df['title'].str.lower()
+        self.df['category'].replace('', np.nan, inplace=True)
+        self.df['category'].fillna('unknown', inplace=True)
 
-# Criar uma guia para os gráficos
-notebook = ttk.Notebook(root)
-notebook.pack(fill='both', expand=True)
+    def split_data(self):
+        df_train = self.df[self.df['category'] != 'unknown']
+        X_train, X_test, y_train, y_test = train_test_split(df_train[['title', 'content']], df_train['category'], test_size=0.2, random_state=42)
+        return X_train, X_test, y_train, y_test
 
-# Criar as figuras para os gráficos
-fig1, ax1 = plt.subplots(figsize=(8, 6))
-fig2, ax2 = plt.subplots(figsize=(8, 6))
-fig3, ax3 = plt.subplots(figsize=(8, 6))
+    def tokenize_data(self, X_train, X_test):
+        self.tokenizer.fit_on_texts(X_train['title'] + ' ' + X_train['content'])
+        max_len = 100
+        X_train_seq = pad_sequences(self.tokenizer.texts_to_sequences(X_train['title'] + ' ' + X_train['content']), maxlen=max_len)
+        X_test_seq = pad_sequences(self.tokenizer.texts_to_sequences(X_test['title'] + ' ' + X_test['content']), maxlen=max_len)
+        return X_train_seq, X_test_seq
 
-# Gráfico de barras: quantidade de categorias por notícias
-sns.countplot(x='category', data=df_dados, palette='viridis', ax=ax1)
-ax1.set_title('Quantidade de Notícias por Categoria')
-ax1.set_xlabel('Categoria')
-ax1.set_ylabel('Quantidade de Notícias')
-ax1.tick_params(axis='x', rotation=45)
+    def encode_labels(self, y_train, y_test):
+        self.label_encoder.fit(y_train)
+        y_train_encoded = self.label_encoder.transform(y_train)
+        y_test_encoded = self.label_encoder.transform(y_test)
+        return y_train_encoded, y_test_encoded
 
-# Gráfico de pizza: quantidade de notícias por classificação
-classification_counts = df_dados['classification'].value_counts()
-if not classification_counts.empty:
-    classification_counts.plot(kind='pie', autopct='%1.1f%%', ax=ax2, textprops={'fontsize': 12})
-    ax2.set_title('Distribuição de Notícias por Classificação')
-    ax2.set_ylabel('')  # Remover o rótulo do eixo y
+    def build_model(self, vocab_size, embedding_dim, max_len, num_classes):
+        model = Sequential([
+            Embedding(vocab_size, embedding_dim, input_length=max_len),
+            Conv1D(256, 5, activation='relu'),
+            GlobalMaxPooling1D(),
+            Dense(256, activation='relu'),
+            Dropout(0.5),
+            Dense(num_classes, activation='softmax')
+        ])
+        model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+        return model
 
-# Gráfico de linha: quantidade de notícias por período
-df_dados['age'] = pd.to_datetime(df_dados['age'])
-df_dados.set_index('age', inplace=True)
-news_by_date = df_dados.resample('M').size()
-news_by_date.plot(ax=ax3)
-ax3.set_title('Quantidade de Notícias ao Longo do Tempo')
-ax3.set_xlabel('Data')
-ax3.set_ylabel('Quantidade de Notícias')
+    def train_model(self, model, X_train, y_train_encoded):
+        model.fit(X_train, y_train_encoded, epochs=20, batch_size=128, validation_split=0.1)
 
-# Adicionar as figuras às guias
-canvas1 = FigureCanvasTkAgg(fig1, master=notebook)
-canvas2 = FigureCanvasTkAgg(fig2, master=notebook)
-canvas3 = FigureCanvasTkAgg(fig3, master=notebook)
+    def evaluate_model(self, model, X_test, y_test_encoded):
+        return model.evaluate(X_test, y_test_encoded)
 
-tab1 = canvas1.get_tk_widget()
-tab2 = canvas2.get_tk_widget()
-tab3 = canvas3.get_tk_widget()
+    def predict_missing_categories(self):
+        df_missing = self.df[self.df['category'] == 'unknown']
+        X_missing_seq = pad_sequences(self.tokenizer.texts_to_sequences(df_missing['title'] + ' ' + df_missing['content']), maxlen=100)
+        predictions = self.model.predict(X_missing_seq)
+        predicted_categories = self.label_encoder.inverse_transform(np.argmax(predictions, axis=1))
+        self.df.loc[self.df['category'] == 'unknown', 'category'] = predicted_categories
 
-notebook.add(tab1, text='Categoria')
-notebook.add(tab2, text='Classificação')
-notebook.add(tab3, text='Tempo')
+    def display_updated_dataframe(self):
+        self.df.to_excel('news_data.xlsx', index=False)
 
-# Adicionar a barra de ferramentas de navegação para cada guia
-toolbar1 = NavigationToolbar2Tk(canvas1, root)
-toolbar2 = NavigationToolbar2Tk(canvas2, root)
-toolbar3 = NavigationToolbar2Tk(canvas3, root)
+    def save_category(self, filename='category_data.xlsx'):
+        category_df = self.df[['title', 'category']].copy()
+        self.news_repo.process_and_save_news_category(category_df)
 
-canvas1.get_tk_widget().pack()
-toolbar1.pack()
-canvas2.get_tk_widget().pack()
-toolbar2.pack()
-canvas3.get_tk_widget().pack()
-toolbar3.pack()
 
-root.mainloop()
+if __name__ == "__main__":
+    # Example of usage
+    db_name = 'usjlmkja'
+    db_user = 'usjlmkja'
+    db_password = 'QKJgujyxlBSINpQBd8Gc3-rsc8S0_fiT'
+    db_host = 'isabelle.db.elephantsql.com'
+    db_port = '5432'
+
+    categorizer = NewsCategorizer(db_name, db_user, db_password, db_host, db_port)
+    categorizer.fetch_data()
+    categorizer.preprocess_data()
+    X_train, X_test, y_train, y_test = categorizer.split_data()
+    X_train_seq, X_test_seq = categorizer.tokenize_data(X_train, X_test)
+    y_train_encoded, y_test_encoded = categorizer.encode_labels(y_train, y_test)
+    vocab_size = len(categorizer.tokenizer.word_index) + 1
+    embedding_dim = 100
+    categorizer.model = categorizer.build_model(vocab_size, embedding_dim, 100, len(categorizer.label_encoder.classes_))
+    categorizer.train_model(categorizer.model, X_train_seq, y_train_encoded)
+    loss, accuracy = categorizer.evaluate_model(categorizer.model, X_test_seq, y_test_encoded)
+    print(f'Test Accuracy: {accuracy}')
+    categorizer.predict_missing_categories()
+    categorizer.save_category()
+    categorizer.display_updated_dataframe()

@@ -59,6 +59,14 @@ class NewsRepository:
         except Exception as e:
             print(f"Error retrieving all news: {e}")
             return False
+    def check_null_classification(self):
+        news_database = NewsDataBase(self.dbname, self.user, self.password, self.host, self.port)
+        try:
+            is_null = news_database.check_null_classification()
+            return is_null
+        except Exception as e:
+            print(f"Error retrieving all news: {e}")
+            return False
     def get_news_by_title(self, title):
         news_database = NewsDataBase(self.dbname, self.user, self.password, self.host, self.port)
         try:

@@ -122,14 +122,34 @@ class NewsDataBase:
         finally:
             # Retorna ao modo de transação padrão após a execução
             self.conn.autocommit = False
+
     def check_null_category(self):
         cursor = self.conn.cursor()
         try:
-            cursor.execute("SELECT n.category FROM news n WHERE n.category IS NULL OR EMPTY")
-            count = cursor.fetchone()[0]
-            return count == 0
+            cursor.execute("SELECT n.category FROM news n WHERE n.category IS NULL or n.category = ''")
+            result = cursor.fetchone()
+            if result is not None:
+                count = result[0]
+                return count == 0
+            else:
+                return True
         except Exception as e:
             print(f"Error checking for null values: {e}")
             return True
+    def check_null_classification(self):
+        cursor = self.conn.cursor()
+        try:
+            cursor.execute("SELECT n.classification FROM news n WHERE n.classification IS NULL")
+            result = cursor.fetchone()
+            if result is not None:
+                count = result[0]
+                return count == 0
+            else:
+                return True
+        except Exception as e:
+            print(f"Error checking for null values: {e}")
+            return True
+
+
     def close_connection(self):
         self.conn.close()

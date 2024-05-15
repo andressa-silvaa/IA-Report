@@ -25,9 +25,8 @@ class PreProcessing:
             'ação governamental': ['governo', 'governamental', 'política pública', 'medidas governamentais',
                                    'gestão pública','programa','combate'],
             'atividades ilegais': ['ilegal', 'contrabando', 'tráfico', 'ilegalidade', 'ilegalmente'],
-            'estatísticas': ['estatísticas', 'dados', 'indicadores', 'análise estatística', 'pesquisas','índice','rank','%','área','estudo','tendência','redução','queda','cai','taxa','aponta','levantamento','cresce','caiu'],
-            'conscientização pública': ['conscientização', 'educação ambiental', 'mobilização social',
-                                        'campanhas educativas', 'sensibilização', 'consciência ambiental','ambientalista','protestam','dúvida','promotor']
+            'estatísticas': ['estatísticas', 'dados', 'indicadores', 'análise estatística', 'pesquisas','índice','rank','%','área','estudo','tendência','redução','queda','cai','taxa','aponta','levantamento','cresce','caiu']
+
         }
 
         self.forbidden_locations = ['crime ambient','polícia feder combat, airão interior amazona divulgaçãopf','registr',
@@ -133,38 +132,33 @@ class PreProcessing:
 
     def extract_location(self, text):
         doc = self.nlp(text)
-        locations = [ent.text for ent in doc.ents if ent.label_ == 'LOC']
+        locations = [ent.text.strip() for ent in doc.ents if ent.label_ == 'LOC']
         if locations:
             filtered_locations = []
             for location in locations:
                 if any(forbidden in location.lower() for forbidden in self.forbidden_locations):
-                    for forbidden in self.forbidden_locations:
-                        if forbidden in location.lower():
-                            location = location.replace(forbidden, "")
-                    filtered_locations.append(location.strip())
-                else:
-                    filtered_locations.append(location)
-
-            # Substituir localizações específicas
-            replacements = {
-                'ministério meio ambient, amazônia': 'amazônia',
-                'confira destaqu g1, rondônia': 'rondônia',
-                'estado rondônia amazona ruan gabriel rede amazônica': 'rondônia',
-                'combat, amazônia, rondônia': 'rondônia',
-                'rondônia amazona ruan gabriel rede amazônica':'rondônia',
-                'imazon': 'amazônia',
-                'amazônia, instituto nacion pesquisa espaciai, amazônia': 'amazônia',
-                'amazônia menor': 'amazônia',
-                'mata atlântica, paraná, mata atlântica, mata atlântica': 'paraná',
-                'pantan so pantan, mato grosso sul': 'mato grosso do sul'
-            }
-
-            for i, location in enumerate(filtered_locations):
+                    continue  # Ignora locais proibidos
+                # Substituir localizações específicas
+                replacements = {
+                    'ministério meio ambient, amazônia': 'amazônia',
+                    'confira destaqu g1, rondônia': 'rondônia',
+                    'estado rondônia amazona ruan gabriel rede amazônica': 'rondônia',
+                    'combat, amazônia, rondônia': 'rondônia',
+                    'rondônia amazona ruan gabriel rede amazônica': 'rondônia',
+                    'imazon': 'amazônia',
+                    'amazônia, instituto nacion pesquisa espaciai, amazônia': 'amazônia',
+                    'amazônia menor': 'amazônia',
+                    'mata atlântica, paraná, mata atlântica, mata atlântica': 'paraná',
+                    'pantan so pantan, mato grosso sul': 'mato grosso do sul'
+                }
                 if location in replacements:
-                    filtered_locations[i] = replacements[location]
+                    location = replacements[location]
 
-            return ', '.join(filtered_locations) if filtered_locations else None
+                filtered_locations.append(location.strip())
+
+            return filtered_locations[0] if filtered_locations else None
         else:
+
             return None
 
 
