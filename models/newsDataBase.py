@@ -15,21 +15,26 @@ class NewsDataBase:
                             media_img TEXT,
                             media_video TEXT,
                             locality TEXT,
-                            category TEXT
+                            category TEXT,
+                            classification TEXT
                         )''')
         self.conn.commit()
 
     def insert_news(self, news_list):
         cursor = self.conn.cursor()
+        rows_inserted = 0  # Inicializa o contador de linhas inseridas
         for index, news in enumerate(news_list):
             try:
-                cursor.execute('''INSERT INTO news (title, content, age, link, media_img, media_video, locality, category)
-                                  VALUES (%s, %s, %s, %s, %s, %s, %s, %s)''',
+                cursor.execute('''INSERT INTO news (title, content, age, link, media_img, media_video, locality, category, classification)
+                                  VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)''',
                                (news['title'], news['content'], news['age'], news['link'], news['media_img'],
-                                news['media_video'], news['locality'], news.get('category', None)))
+                                news['media_video'], news['locality'], news.get('category', None),
+                                news.get('classification', None)))
+                rows_inserted += 1  # Incrementa o contador de linhas inseridas
             except Exception as e:
                 print(f"Error processing news at index {index}: {e}")
         self.conn.commit()
+        return rows_inserted  # Retorna o número total de linhas inseridas
 
     def insert_news_category(self, news_list):
         cursor = self.conn.cursor()
@@ -40,9 +45,19 @@ class NewsDataBase:
             except Exception as e:
                 print(f"Error processing news at index {index}: {e}")
         self.conn.commit()
+
+    def insert_news_classification(self, news_list):
+        cursor = self.conn.cursor()
+        for index, news in enumerate(news_list):
+            try:
+                cursor.execute('''UPDATE news SET classification = %s WHERE content = %s''',
+                               (news.get('classification', None), news['content']))
+            except Exception as e:
+                print(f"Error processing news at index {index}: {e}")
+        self.conn.commit()
     def get_all_news(self):
         cursor = self.conn.cursor()
-        cursor.execute('''SELECT n.title,n.content,n.age,n.link,n.media_img,n.media_video,n.locality,n.category FROM news n''')
+        cursor.execute('''SELECT n.title,n.content,n.age,n.link,n.media_img,n.media_video,n.locality,n.category,n.classification FROM news n''')
         rows = cursor.fetchall()
         return rows
     def get_title_content_category(self):
@@ -94,5 +109,27 @@ class NewsDataBase:
         cursor.execute('''DELETE FROM news WHERE id=%s''', (news_id,))
         self.conn.commit()
 
+    def delete_table(self):
+        cursor = self.conn.cursor()
+        try:
+            # Define autocommit como True para desabilitar o controle de transação
+            self.conn.autocommit = True
+            cursor.execute('''DROP TABLE news''')
+            return True
+        except Exception as e:
+            print(f"Error deleting database: {e}")
+            return False
+        finally:
+            # Retorna ao modo de transação padrão após a execução
+            self.conn.autocommit = False
+    def check_null_category(self):
+        cursor = self.conn.cursor()
+        try:
+            cursor.execute("SELECT n.category FROM news n WHERE n.category IS NULL OR EMPTY")
+            count = cursor.fetchone()[0]
+            return count == 0
+        except Exception as e:
+            print(f"Error checking for null values: {e}")
+            return True
     def close_connection(self):
         self.conn.close()

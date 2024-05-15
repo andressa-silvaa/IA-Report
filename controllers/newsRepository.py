@@ -13,7 +13,8 @@ class NewsRepository:
         news_database = NewsDataBase(self.dbname, self.user, self.password, self.host, self.port)
         news_list = df.to_dict('records')
         try:
-            news_database.insert_news(news_list)
+            rows_inserted = news_database.insert_news(news_list)
+            print(f"{rows_inserted} linhas inseridas.")
         except Exception as e:
             print(f"Error processing and saving news: {e}")
 
@@ -22,6 +23,13 @@ class NewsRepository:
         news_list = df.to_dict('records')
         try:
             news_database.insert_news_category(news_list)
+        except Exception as e:
+            print(f"Error processing and saving news category: {e}")
+    def process_and_save_news_classification(self, df):
+        news_database = NewsDataBase(self.dbname, self.user, self.password, self.host, self.port)
+        news_list = df.to_dict('records')
+        try:
+            news_database.insert_news_classification(news_list)
         except Exception as e:
             print(f"Error processing and saving news category: {e}")
 
@@ -42,6 +50,15 @@ class NewsRepository:
         except Exception as e:
             print(f"Error retrieving all news: {e}")
             return []
+
+    def check_null_category(self):
+        news_database = NewsDataBase(self.dbname, self.user, self.password, self.host, self.port)
+        try:
+            is_null = news_database.check_null_category()
+            return is_null
+        except Exception as e:
+            print(f"Error retrieving all news: {e}")
+            return False
     def get_news_by_title(self, title):
         news_database = NewsDataBase(self.dbname, self.user, self.password, self.host, self.port)
         try:
@@ -101,5 +118,13 @@ class NewsRepository:
         except Exception as e:
             print(f"Error deleting news: {e}")
 
+    def delete_table(self):
+        news_database = NewsDataBase(self.dbname, self.user, self.password, self.host, self.port)
+        try:
+            success = news_database.delete_table()
+            return success
+        except Exception as e:
+            print(f"Error retrieving all news: {e}")
+            return False
     def _row_to_news(self, row):
         return News(row[1], row[2], row[3], row[4], row[5], row[6], row[7])

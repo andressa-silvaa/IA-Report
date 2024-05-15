@@ -52,7 +52,7 @@ class NewsCollection:
                 title_text = title.text.strip() if title else None
                 content_text = description.text.strip()
                 age = new_age.text.strip() if new_age else None
-                if title_text:
+                if title_text and title_text != "Assista a seguir":
                     news_list.append(
                         {'title': title_text, 'content': content_text, 'age': age, 'link': link, 'media_img': media_img,
                          'media_video': media_video})
