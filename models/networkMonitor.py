@@ -1,6 +1,7 @@
+import os
 import psutil
 import socket
-import time
+import pandas as pd
 
 
 class NetworkMonitor:
@@ -11,34 +12,52 @@ class NetworkMonitor:
         net_io = psutil.net_io_counters()
         connections = psutil.net_connections(kind='inet')
 
-        print("=== Estatísticas de Rede ===")
-        print(f"Bytes enviados: {net_io.bytes_sent}")
-        print(f"Bytes recebidos: {net_io.bytes_recv}")
-        print(f"Pacotes enviados: {net_io.packets_sent}")
-        print(f"Pacotes recebidos: {net_io.packets_recv}")
-        print(f"Erros de transmissão: {net_io.errout}")
-        print(f"Erros de recebimento: {net_io.errin}")
-        print("=== Conexões de Rede ===")
+        # Lista para armazenar os dados das conexões
+        connection_data = []
+
         for conn in connections:
             protocol = self.get_protocol(conn)
-            print(f"PID: {conn.pid}, Local: {conn.laddr}, Remoto: {conn.raddr}, Estado: {conn.status}, Protocolo: {protocol}")
-        print("-------------------------")
+            local_addr = self.format_address(conn.laddr)
+            remote_addr = self.format_address(conn.raddr)
+            connection_data.append({
+                "PID": conn.pid,
+                "Local": local_addr,
+                "Remoto": remote_addr,
+                "Estado": conn.status,
+                "Protocolo": protocol
+            })
+
+        # Criar DataFrame com os dados das conexões
+        df_connections = pd.DataFrame(connection_data)
+
+        # Obter o caminho da pasta "Downloads"
+        downloads_folder = os.path.join(os.path.expanduser('~'), 'Downloads')
+
+        # Caminho completo para o arquivo Excel na pasta "Downloads"
+        excel_file_path = os.path.join(downloads_folder, 'network_connections.xlsx')
+
+        # Salvar DataFrame em um arquivo Excel na pasta "Downloads"
+        df_connections.to_excel(excel_file_path, index=False)
+
+        print(f"Dados das conexões de rede salvos em '{excel_file_path}'")
 
     def get_protocol(self, conn):
         try:
-            if conn.laddr and conn.raddr:
-                local_ip, local_port = conn.laddr
-                remote_ip, remote_port = conn.raddr
-                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                    s.settimeout(1)
-                    s.connect((remote_ip, remote_port))
-                    return "TCP"
-            elif conn.laddr and not conn.raddr:
+            if conn.family == socket.AF_INET and conn.type == socket.SOCK_STREAM:
                 return "TCP"
-            else:
+            elif conn.family == socket.AF_INET and conn.type == socket.SOCK_DGRAM:
                 return "UDP"
+            else:
+                return "Desconhecido"
         except Exception as e:
             return "Desconhecido"
+
+    def format_address(self, addr):
+        if addr:
+            ip, port = addr
+            return ip
+        else:
+            return ""
 
 
 if __name__ == "__main__":
