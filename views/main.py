@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
-
+from config import DB_NAME, DB_USER, DB_PASSWORD, DB_HOST, DB_PORT
 # Importações
 from controllers.newsCollection import NewsCollection
 from controllers.preProcessing import PreProcessing
@@ -11,13 +11,6 @@ from models.newsCategorizer import NewsCategorizer
 from models.trainingSet import TextProcessor
 from views.Dashboard import NewsVisualizer
 
-# Credenciais do banco
-DB_NAME = 'usjlmkja'
-DB_USER = 'usjlmkja'
-DB_PASSWORD = 'QKJgujyxlBSINpQBd8Gc3-rsc8S0_fiT'
-DB_HOST = 'isabelle.db.elephantsql.com'
-DB_PORT = '5432'
-
 # Função para inicializar a conexão com o banco de dados
 def initialize_news_repository():
     return NewsRepository(DB_NAME, DB_USER, DB_PASSWORD, DB_HOST, DB_PORT)
@@ -25,8 +18,13 @@ def initialize_news_repository():
 # Funções para operações específicas
 def delete_news():
     news_repository = initialize_news_repository()
-    news_repository.delete_table()
-    messagebox.showinfo("Sucesso", "Notícias apagadas com sucesso!")
+    news_data = news_repository.get_all_news()
+    if not news_data:
+        messagebox.showinfo("Info", "Base de dados vazia!")
+    else:
+        news_repository = initialize_news_repository()
+        news_repository.delete_table()
+        messagebox.showinfo("Sucesso", "Notícias apagadas com sucesso!")
 
 def load_news():
     news_repository = initialize_news_repository()
@@ -43,7 +41,10 @@ def load_news():
 
 def classify_news():
     news_repository = initialize_news_repository()
-    if news_repository.check_null_classification():
+    news_data = news_repository.get_all_news()
+    if not news_data:
+        messagebox.showinfo("Info", "Base de dados vazia!")
+    elif news_repository.check_null_classification():
         messagebox.showinfo("Info", "Notícias já classificadas!")
     else:
         text_processor = TextProcessor()
@@ -64,7 +65,10 @@ def classify_news():
 
 def categorize_news():
     news_repository = initialize_news_repository()
-    if news_repository.check_null_category():
+    news_data = news_repository.get_all_news()
+    if not news_data:
+        messagebox.showinfo("Info", "Base de dados vazia!")
+    elif news_repository.check_null_category():
         messagebox.showinfo("Info", "Notícias já categorizadas!")
     else:
         categorizer = NewsCategorizer(DB_NAME, DB_USER, DB_PASSWORD, DB_HOST, DB_PORT)
@@ -86,9 +90,19 @@ def categorize_news():
 
 def display_report():
     news_repository = initialize_news_repository()
-    visualizer = NewsVisualizer(news_repository)
-    visualizer.visualize_data()
-    messagebox.showinfo("Sucesso", "Relatório exibido com sucesso!")
+    news_data = news_repository.get_all_news()
+    if not news_data:
+        messagebox.showinfo("Info", "Base de dados vazia!")
+
+    elif not news_repository.check_null_classification():
+        messagebox.showinfo("Info", "Notícias não classificadas!")
+
+    elif not news_repository.check_null_category():
+        messagebox.showinfo("Info", "Notícias não categorizadas!")
+    else:
+        visualizer = NewsVisualizer(news_repository)
+        visualizer.visualize_data()
+        messagebox.showinfo("Sucesso", "Relatório exibido com sucesso!")
 
 
 def monitor_network():

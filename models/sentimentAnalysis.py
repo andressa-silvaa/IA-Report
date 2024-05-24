@@ -8,7 +8,7 @@ from tensorflow.keras.layers import Embedding, LSTM, Dense, Dropout
 from sklearn.model_selection import train_test_split
 from sklearn.utils import shuffle
 from controllers.newsRepository import NewsRepository
-
+from config import DB_NAME, DB_USER, DB_PASSWORD, DB_HOST, DB_PORT
 class SentimentAnalyzer:
     def __init__(self):
         np.random.seed(42)
@@ -57,7 +57,7 @@ class SentimentAnalyzer:
     def analyze_sentiment(self, tokenizer):
         try:
             model = tf.keras.models.load_model('modelo_sentimento.h5')
-            news_repo = NewsRepository('usjlmkja', 'usjlmkja', 'QKJgujyxlBSINpQBd8Gc3-rsc8S0_fiT', 'isabelle.db.elephantsql.com', '5432')
+            news_repo = NewsRepository(DB_NAME, DB_USER, DB_PASSWORD, DB_HOST, DB_PORT)
             news_data = news_repo.get_all_news()
             df_dados = pd.DataFrame(news_data, columns=['title', 'content', 'age','link','media_img','media_video','locality','category','classification'])
             df = df_dados[['content', 'classification']].copy()

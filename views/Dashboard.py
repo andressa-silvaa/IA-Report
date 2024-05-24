@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from mpl_toolkits.basemap import Basemap
 from controllers.newsRepository import NewsRepository
-
+from config import DB_NAME, DB_USER, DB_PASSWORD, DB_HOST, DB_PORT
 class NewsVisualizer:
     def __init__(self, repository):
         self.repo = repository
@@ -59,6 +59,6 @@ class NewsVisualizer:
         plt.show()
 
 if __name__ == "__main__":
-    news_repo = NewsRepository('usjlmkja', 'usjlmkja', 'QKJgujyxlBSINpQBd8Gc3-rsc8S0_fiT', 'isabelle.db.elephantsql.com', '5432')
+    news_repo = NewsRepository(DB_NAME, DB_USER, DB_PASSWORD, DB_HOST, DB_PORT)
     visualizer = NewsVisualizer(news_repo)
     visualizer.visualize_data()

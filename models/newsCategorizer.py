@@ -9,7 +9,7 @@ from tensorflow.keras.preprocessing.text import Tokenizer
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Embedding, Conv1D, GlobalMaxPooling1D, Dense, Dropout
-
+from config import DB_NAME, DB_USER, DB_PASSWORD, DB_HOST, DB_PORT
 class NewsCategorizer:
     def __init__(self, db_name, db_user, db_password, db_host, db_port):
         np.random.seed(42)
@@ -84,14 +84,8 @@ class NewsCategorizer:
 
 
 if __name__ == "__main__":
-    # Example of usage
-    db_name = 'usjlmkja'
-    db_user = 'usjlmkja'
-    db_password = 'QKJgujyxlBSINpQBd8Gc3-rsc8S0_fiT'
-    db_host = 'isabelle.db.elephantsql.com'
-    db_port = '5432'
 
-    categorizer = NewsCategorizer(db_name, db_user, db_password, db_host, db_port)
+    categorizer = NewsCategorizer(DB_NAME, DB_USER, DB_PASSWORD, DB_HOST, DB_PORT)
     categorizer.fetch_data()
     categorizer.preprocess_data()
     X_train, X_test, y_train, y_test = categorizer.split_data()
